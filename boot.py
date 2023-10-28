@@ -1,3 +1,4 @@
+"""Module supervisor functions."""
 import supervisor
 # import storage
 
