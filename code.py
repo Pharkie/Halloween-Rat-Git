@@ -12,6 +12,9 @@ import adafruit_rgbled
 from digitalio import DigitalInOut, Direction, Pull
 
 FOLDER_PATH = "/mp3"
+WAIT_TIME = 20 # Seconds (+- 30%) to wait before playing the next mp3
+WAIT_VARIANCE = 30/100 # 30% variance in wait time
+
 audio = audiobusio.I2SOut(board.GP0, board.GP1, board.GP2)
 # Create a RGB LED object
 rgbled1 = adafruit_rgbled.RGBLED(board.GP10, board.GP11, board.GP12, invert_pwm=True)
@@ -60,7 +63,7 @@ def cycle_eyes():
         time.sleep(0.001)
 
 def flash_eyes(colour1, colour2, speed, eyes_together=True):
-    """Flash both eyes with the given colours and speed"""
+    """Animate LED eyes with the given colours and speed"""
     sleep_time = (11 - speed) / 20.0 * 0.5
 
     if eyes_together:
@@ -91,24 +94,33 @@ def play_mp3(mp3_file):
     # Randomly select a new eye colour that is different from the previous one
     eye_colour = random.choice(list(set(EYE_COLOURS) - {prev_eye_colour}))
 
-    # Randomly select a new eye function
-    eye_function = random.choice([flash_eyes, flash_eyes, flash_eyes, cycle_eyes])
+    # Randomly select an eye function with the specified weighting
+    # 1 = flash_eyes fast with random colour
+    # 2 = flash_eyes alternating at random speed with random colour
+    # 3 = cycle_eyes
+    r = random.random()
 
-    # Randomly select the second eye colour and flash speed
-    if random.random() < 0.5:
-        eye_colour2 = COLOUR_OFF
-        flash_speed = 10
-    else:
+    if r < 0.6:
+        eye_animation_choice = 1
+    elif r < 0.8:
+        eye_animation_choice = 2
         eye_colour2 = random.choice(list(set(EYE_COLOURS) - {eye_colour}))
         flash_speed = random.randint(1, 10)
+    else:
+        eye_animation_choice = 3
 
     # Flash the LED while the MP3 is playing
     while audio.playing:
         # Call the selected function with the selected colours and speed
-        if eye_function == cycle_eyes:
-            eye_function()
-        else:
-            eye_function(eye_colour, eye_colour2, flash_speed, True)
+        if eye_animation_choice == 1:
+            # print("Animation 1")
+            flash_eyes(eye_colour, COLOUR_OFF, 10, True)
+        elif eye_animation_choice == 2:
+            # print("Animation 2")
+            flash_eyes(eye_colour, eye_colour2, flash_speed, False)
+        elif eye_animation_choice == 3:
+            # print("Animation 3")
+            cycle_eyes()
 
         # Set the previous eye colour to the current one
         prev_eye_colour = eye_colour
@@ -116,6 +128,7 @@ def play_mp3(mp3_file):
         # Check if the button has been pressed
         if button.value != button_last_value:
             # Exit the loop if the button has been pressed
+            audio.stop()
             break
 
     rgbled1.color = COLOUR_OFF
@@ -148,8 +161,10 @@ def main():
 
     try:
         while True:
-            # Wait for a random amount of time between 5 and 10 seconds before playing the next mp3
-            delay = random.randint(5, 10)
+            # Wait for a time before automatically playing the next mp3
+            delay = random.randint(int(WAIT_TIME*(1-WAIT_VARIANCE)), int(WAIT_TIME*(1+WAIT_VARIANCE)))
+            print(f"Delay set to {delay} seconds")
+
             for i in range(delay * 10):
                 if button.value != button_last_value: # Make the on/off button into a toggle switch
                     break
