@@ -172,9 +172,17 @@ def main():
             
             button_last_value = button.value
 
-            # Select a random mp3 file that is different from the last one played
-            while mp3_file == last_mp3:
-                mp3_file = random.choice(mp3s)
+            if len(mp3s) == 1:
+                # If there is only one mp3, play it and set last_mp3 to None
+                mp3_file = mp3s[0]
+            elif len(mp3s) == 2:
+                # If there are only 2 mp3s, select the one that is different from the last one played
+                mp3_file = mp3s[0] if mp3s[0] != last_mp3 else mp3s[1]
+            else:
+                # If there are more than 2 mp3s, select a random one that is different from the last one played
+                while mp3_file == last_mp3:
+                    mp3_file = random.choice(mp3s)
+
             last_mp3 = mp3_file
 
             # Load and play the selected mp3 file
