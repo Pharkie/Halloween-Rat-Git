@@ -12,7 +12,7 @@ import adafruit_rgbled
 from digitalio import DigitalInOut, Direction, Pull
 
 FOLDER_PATH = "/mp3"
-WAIT_TIME = 20 # Seconds (+- 30%) to wait before playing the next mp3
+WAIT_TIME = 6*60 # Seconds (+- 30%) to wait before playing the next mp3
 WAIT_VARIANCE = 30/100 # 30% variance in wait time
 
 audio = audiobusio.I2SOut(board.GP0, board.GP1, board.GP2)
