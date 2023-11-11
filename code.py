@@ -145,22 +145,24 @@ def main():
     except OSError:
         print("The file 'startup.mp3' does not exist.")
 
-    mp3s = []
+    current_mp3s = []
     for filename in os.listdir(FOLDER_PATH):
         if filename.endswith(".mp3") and not filename.startswith("._"):
-            mp3s.append(filename)
+            current_mp3s.append(filename)
 
-    # Only play startup.mp3 once, on boot
-    if "startup.mp3" in mp3s:
-        mp3s.remove("startup.mp3")
-
-    if not mp3s:
+    if not current_mp3s:
         print("No mp3 files found in /mp3 directory")
         return
     else:
-        print(mp3s)
+        print(current_mp3s)
 
-    last_mp3 = None
+    # Only play startup.mp3 once, on boot
+    if "startup.mp3" in current_mp3s:
+        current_mp3s.remove("startup.mp3")
+
+    # Make a copy of the original list of mp3s to restore on reset
+    reset_mp3s = current_mp3s.copy()
+
     mp3_file = None
 
     try:
@@ -176,24 +178,18 @@ def main():
             
             button_last_value = button.value
 
-            if len(mp3s) == 1:
-                # If there is only one mp3, play it and set last_mp3 to None
-                mp3_file = mp3s[0]
-            elif len(mp3s) == 2:
-                # If there are only 2 mp3s, select the one that is different from the last one played
-                mp3_file = mp3s[0] if mp3s[0] != last_mp3 else mp3s[1]
-            else:
-                # If there are more than 2 mp3s, select a random one that is different from the last one played
-                while mp3_file == last_mp3:
-                    mp3_file = random.choice(mp3s)
+            mp3_file = random.choice(current_mp3s)
+            current_mp3s.remove(mp3_file)
 
-            last_mp3 = mp3_file
+            if not current_mp3s:
+                current_mp3s = reset_mp3s.copy()
 
-            # Load and play the selected mp3 file
             play_mp3(mp3_file)
 
     except KeyboardInterrupt:
         print("Program stopped by user")
+    except OSError:
+        print(f"The file '{mp3_file}' does not exist.")
 
 if __name__ == "__main__":
     main()
