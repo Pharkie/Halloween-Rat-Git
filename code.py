@@ -12,7 +12,7 @@ import adafruit_rgbled
 from digitalio import DigitalInOut, Direction, Pull
 
 FOLDER_PATH = "/mp3"
-WAIT_TIME = 6*60 # Seconds (+- 30%) to wait before playing the next mp3
+WAIT_TIME = 5*60 # Seconds (+- 30%) to wait before playing the next mp3
 WAIT_VARIANCE = 30/100 # 30% variance in wait time
 
 audio = audiobusio.I2SOut(board.GP0, board.GP1, board.GP2)
@@ -140,7 +140,10 @@ def main():
     
     print("Running my Tory rat")
 
-    play_mp3("startup.mp3")
+    try:
+        play_mp3("startup.mp3")
+    except OSError:
+        print("The file 'startup.mp3' does not exist.")
 
     mp3s = []
     for filename in os.listdir(FOLDER_PATH):
@@ -148,13 +151,14 @@ def main():
             mp3s.append(filename)
 
     # Only play startup.mp3 once, on boot
-    mp3s.remove("startup.mp3")
+    if "startup.mp3" in mp3s:
+        mp3s.remove("startup.mp3")
 
     if not mp3s:
         print("No mp3 files found in /mp3 directory")
         return
-
-    print(mp3s)
+    else:
+        print(mp3s)
 
     last_mp3 = None
     mp3_file = None
